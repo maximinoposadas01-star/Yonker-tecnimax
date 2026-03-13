@@ -151,7 +151,7 @@ textarea{resize:vertical;min-height:70px}
     <div class="name-input-wrap" id="nameWrap">
       <label>Tu nombre:</label>
       <div class="name-input-row">
-        <input type="text" id="inputName" placeholder="Ej: Carlos, Mario..." onkeydown="if(event.key==='Enter')confirmLogin()">
+        <select id="inputName" style="flex:1"></select>
         <button class="btn btn-primary btn-sm" onclick="confirmLogin()">Entrar</button>
       </div>
       <div id="adminPinWrap" style="display:none;margin-top:10px">
@@ -370,11 +370,58 @@ function renderBP(){const el=document.getElementById('buscFilePreviews');if(!el)
 async function confirmarRes(id,res){const btn=document.getElementById('btnConfirmar');if(btn){btn.disabled=true;btn.textContent='⏳...';}const notas=document.getElementById('modalNotas')?.value?.trim()||'';const estado=res==='Encontrado'?'Encontrado':'No Encontrado';let archBusc=[];if(buscadorFiles.length&&res==='Encontrado'){for(const f of buscadorFiles){const link=await uploadFile(id+'_ev',f);if(link)archBusc.push(link);}}await api({accion:'resultado',id,estado,notasBuscador:notas,archivosBuscador:JSON.stringify(archBusc),fechaResultado:new Date().toISOString()});buscadorFiles=[];toast('✓ Reportado');closeModal();loadData();}
 
 // ═══ DETALLE ═══
-function verDetalle(id){const s=STATE.solicitudes.find(x=>x.id===id);if(!s)return;const uC=(s.urgencia||'normal').toLowerCase().replace('í','i'),eC=(s.estado||'Pendiente').toLowerCase().replace(' ','-').replace('á','a');let h=`<div class="detail-row"><span class="detail-label">ID</span><span class="detail-value" style="font-family:'JetBrains Mono',monospace;color:var(--yellow)">${s.id}</span></div><div class="detail-row"><span class="detail-label">Pieza</span><span class="detail-value" style="font-weight:700">${esc(s.pieza)}</span></div><div class="detail-row"><span class="detail-label">Vehículo</span><span class="detail-value">${esc(s.marca)} ${esc(s.modelo)} ${s.anio||''}</span></div><div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">${esc(s.cliente||'—')}</span></div><div class="detail-row"><span class="detail-label">Vendedor</span><span class="detail-value">${esc(s.vendedor)}</span></div><div class="detail-row"><span class="detail-label">Urgencia</span><span class="tag tag-${uC}">${s.urgencia||'Normal'}</span></div><div class="detail-row"><span class="detail-label">Estado</span><span class="tag tag-${eC}">${s.estado||'Pendiente'}</span></div><div class="detail-row"><span class="detail-label">Fecha</span><span class="detail-value">${fmtDate(s.fecha)}</span></div>`;if(s.buscador)h+=`<div class="detail-row"><span class="detail-label">Buscador</span><span class="detail-value" style="color:var(--blue)">${esc(s.buscador)}</span></div>`;if(s.fechaResultado)h+=`<div class="detail-row"><span class="detail-label">Resuelto</span><span class="detail-value">${fmtDate(s.fechaResultado)}</span></div>`;if(s.notas)h+=`<div class="detail-row"><span class="detail-label">Notas</span><span class="detail-value">${esc(s.notas)}</span></div>`;if(s.notasBuscador)h+=`<div class="detail-row"><span class="detail-label">Buscador</span><span class="detail-value" style="color:var(--blue)">${esc(s.notasBuscador)}</span></div>`;const arch=s.archivos||[];if(arch.length){h+='<div style="font-size:0.82rem;font-weight:600;color:var(--text-dim);margin-top:14px">📷 Referencia:</div><div class="modal-gallery">';for(const a of arch)h+=a.type==='video'?`<video controls preload="metadata" src="${a.url}"></video>`:`<a href="${a.url}" target="_blank"><img src="${a.url}"></a>`;h+='</div>';}const archB=s.archivosBuscador||[];if(archB.length){h+='<div style="font-size:0.82rem;font-weight:600;color:var(--green);margin-top:14px">📸 Evidencia:</div><div class="modal-gallery">';for(const a of archB)h+=a.type==='video'?`<video controls preload="metadata" src="${a.url}"></video>`:`<a href="${a.url}" target="_blank"><img src="${a.url}"></a>`;h+='</div>';}openModal('Solicitud '+s.id,h);}
+function verDetalle(id){
+  const s=STATE.solicitudes.find(x=>x.id===id);if(!s)return;
+  const uC=(s.urgencia||'normal').toLowerCase().replace('í','i'),eC=(s.estado||'Pendiente').toLowerCase().replace(' ','-').replace('á','a');
+  let h=`<div class="detail-row"><span class="detail-label">ID</span><span class="detail-value" style="font-family:'JetBrains Mono',monospace;color:var(--yellow)">${s.id}</span></div>
+  <div class="detail-row"><span class="detail-label">Pieza</span><span class="detail-value" style="font-weight:700">${esc(s.pieza)}</span></div>
+  <div class="detail-row"><span class="detail-label">Vehículo</span><span class="detail-value">${esc(s.marca)} ${esc(s.modelo)} ${s.anio||''}</span></div>
+  <div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">${esc(s.cliente||'—')}</span></div>
+  <div class="detail-row"><span class="detail-label">Vendedor</span><span class="detail-value">${esc(s.vendedor)}</span></div>
+  <div class="detail-row"><span class="detail-label">Urgencia</span><span class="tag tag-${uC}">${s.urgencia||'Normal'}</span></div>
+  <div class="detail-row"><span class="detail-label">Estado</span><span class="tag tag-${eC}">${s.estado||'Pendiente'}</span></div>
+  <div class="detail-row"><span class="detail-label">Fecha</span><span class="detail-value">${fmtDate(s.fecha)}</span></div>`;
+  if(s.buscador)h+=`<div class="detail-row"><span class="detail-label">Buscador</span><span class="detail-value" style="color:var(--blue)">${esc(s.buscador)}</span></div>`;
+  if(s.fechaResultado)h+=`<div class="detail-row"><span class="detail-label">Resuelto</span><span class="detail-value">${fmtDate(s.fechaResultado)}</span></div>`;
+  if(s.notas)h+=`<div class="detail-row"><span class="detail-label">Notas</span><span class="detail-value">${esc(s.notas)}</span></div>`;
+  if(s.notasBuscador)h+=`<div class="detail-row"><span class="detail-label">Buscador dice</span><span class="detail-value" style="color:var(--blue)">${esc(s.notasBuscador)}</span></div>`;
+  const arch=s.archivos||[];
+  if(arch.length){
+    h+='<div style="font-size:0.82rem;font-weight:600;color:var(--text-dim);margin-top:14px">📷 Referencia:</div><div class="modal-gallery">';
+    for(const a of arch){
+      if(a.type==='video')h+=`<video controls preload="metadata" src="${a.url}"></video>`;
+      else h+=`<a href="${driveOpen(a.url)}" target="_blank"><img src="${driveThumb(a.url,600)}" style="width:100%;border-radius:6px"></a>`;
+    }
+    h+='</div>';
+  }
+  const archB=s.archivosBuscador||[];
+  if(archB.length){
+    h+='<div style="font-size:0.82rem;font-weight:600;color:var(--green);margin-top:14px">📸 Evidencia buscador:</div><div class="modal-gallery">';
+    for(const a of archB){
+      if(a.type==='video')h+=`<video controls preload="metadata" src="${a.url}"></video>`;
+      else h+=`<a href="${driveOpen(a.url)}" target="_blank"><img src="${driveThumb(a.url,600)}" style="width:100%;border-radius:6px"></a>`;
+    }
+    h+='</div>';
+  }
+  openModal('Solicitud '+s.id,h);
+}
 
 // ═══ LOGIN ═══
+const NOMBRES = {
+  vendedor: ['ADONIS','HAROLD','BULNES','OSCAR','NOE','LUIS'],
+  buscador: ['AXEL','ISAAC','PAISA','ANTONI','ROGER','CRISTHIAN'],
+  admin: ['ADONIS']
+};
 let selectedRole=null;
-function selectRole(r){selectedRole=r;document.querySelectorAll('.role-card').forEach((c,i)=>{const m=(i===0&&r==='vendedor')||(i===1&&r==='buscador')||(i===2&&r==='admin');c.style.borderColor=m?'var(--yellow)':'var(--border)';c.style.background=m?'var(--yellow-bg)':'var(--surface)';});document.getElementById('nameWrap').classList.add('show');document.getElementById('adminPinWrap').style.display=r==='admin'?'block':'none';document.getElementById('inputName').focus();}
+function selectRole(r){
+  selectedRole=r;
+  document.querySelectorAll('.role-card').forEach((c,i)=>{const m=(i===0&&r==='vendedor')||(i===1&&r==='buscador')||(i===2&&r==='admin');c.style.borderColor=m?'var(--yellow)':'var(--border)';c.style.background=m?'var(--yellow-bg)':'var(--surface)';});
+  document.getElementById('nameWrap').classList.add('show');
+  document.getElementById('adminPinWrap').style.display=r==='admin'?'block':'none';
+  const sel=document.getElementById('inputName');
+  sel.innerHTML='<option value="">Seleccionar...</option>';
+  (NOMBRES[r]||[]).forEach(n=>{sel.innerHTML+=`<option value="${n}">${n}</option>`;});
+}
 function confirmLogin(){const n=document.getElementById('inputName').value.trim();if(!n){toast('Nombre requerido','error');return;}if(!selectedRole){toast('Selecciona rol','error');return;}if(selectedRole==='admin'){const pin=document.getElementById('inputPin').value.trim();if(pin!==ADMIN_PIN){toast('PIN incorrecto','error');return;}}STATE.role=selectedRole;STATE.name=n;saveS();enterApp();}
 function logout(){localStorage.removeItem(LS);location.reload();}
 function enterApp(){document.getElementById('screenRole').style.display='none';document.getElementById('appHeader').style.display='flex';const icons={vendedor:'🏷️',buscador:'🔍',admin:'👑'};document.getElementById('headerUser').textContent=`${icons[STATE.role]||''} ${STATE.name}`;document.getElementById({vendedor:'viewVendedor',buscador:'viewBuscador',admin:'viewAdmin'}[STATE.role]).style.display='block';initMarcas();loadData();}
@@ -394,6 +441,8 @@ function toast(msg,type){const t=document.getElementById('toast');t.textContent=
 
 // ═══ UTILS ═══
 function esc(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function driveThumb(url,sz){if(!url)return url;const m=url.match(/[?&]id=([^&]+)/);if(m)return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w'+(sz||600);return url;}
+function driveOpen(url){if(!url)return url;const m=url.match(/[?&]id=([^&]+)/);if(m)return 'https://drive.google.com/file/d/'+m[1]+'/view';return url;}
 function trunc(s,m){return s.length>m?s.slice(0,m)+'…':s;}
 function ago(d){if(!d)return '';const s=Math.floor((Date.now()-new Date(d))/1000);if(s<60)return 'ahora';if(s<3600)return Math.floor(s/60)+'min';if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
 function fmtDate(d){if(!d)return '—';return new Date(d).toLocaleDateString('es-HN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}
