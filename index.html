@@ -249,7 +249,7 @@ textarea{resize:vertical;min-height:70px}
 
 <script>
 const ADMIN_PIN = '1234';
-let STATE={role:null,name:'',solicitudes:[],webAppUrl:''};
+let STATE={role:null,name:'',solicitudes:[],webAppUrl:'https://script.google.com/macros/s/AKfycbzLTHNWU4jMlScsM9FjErKTPwJ4cZ9ft38tYBMczX5Uj4IYYRZXwbeEPcZTUln9xgtN/exec'};
 const LS='tecnimax_buscador_v4';
 const saveS=()=>localStorage.setItem(LS,JSON.stringify({role:STATE.role,name:STATE.name,webAppUrl:STATE.webAppUrl}));
 const loadS=()=>{try{const s=JSON.parse(localStorage.getItem(LS));if(s?.role&&s?.name){Object.assign(STATE,s);return true;}}catch(e){}return false;};
@@ -257,13 +257,47 @@ const loadS=()=>{try{const s=JSON.parse(localStorage.getItem(LS));if(s?.role&&s?
 // ═══ FILES ═══
 let pendingFiles=[];
 function handleFiles(input){for(const file of input.files){if(file.size>25*1024*1024){toast(file.name+' muy grande','error');continue;}const isV=file.type.startsWith('video/'),isI=file.type.startsWith('image/');if(!isV&&!isI)continue;if(isI){compressImg(file).then(r=>{pendingFiles.push({file:r.blob,preview:r.dataUrl,type:'image',name:file.name,mime:r.blob.type});renderPreviews()});}else{pendingFiles.push({file,preview:URL.createObjectURL(file),type:'video',name:file.name,mime:file.type});renderPreviews();}}input.value='';}
-function compressImg(file,maxDim=1200,q=0.75){return new Promise(res=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(w>maxDim||h>maxDim){const r=Math.min(maxDim/w,maxDim/h);w=Math.round(w*r);h=Math.round(h*r);}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);c.toBlob(blob=>res({blob,dataUrl:c.toDataURL('image/jpeg',q)}),'image/jpeg',q);};img.src=URL.createObjectURL(file);});}
+function compressImg(file,maxDim=800,q=0.5){return new Promise(res=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(w>maxDim||h>maxDim){const r=Math.min(maxDim/w,maxDim/h);w=Math.round(w*r);h=Math.round(h*r);}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);c.toBlob(blob=>res({blob,dataUrl:c.toDataURL('image/jpeg',q)}),'image/jpeg',q);};img.src=URL.createObjectURL(file);});}
 function renderPreviews(){document.getElementById('filePreviews').innerHTML=pendingFiles.map((f,i)=>{const sz=fmtSize(f.file.size||0);return f.type==='image'?`<div class="file-preview-item"><img src="${f.preview}"><button class="remove-file" onclick="pendingFiles.splice(${i},1);renderPreviews()">✕</button><div class="file-size">${sz}</div></div>`:`<div class="file-preview-item"><div class="sol-thumb-video" style="width:100%;height:100%">▶</div><button class="remove-file" onclick="pendingFiles.splice(${i},1);renderPreviews()">✕</button><div class="file-size">🎬 ${sz}</div></div>`;}).join('');}
 function fmtSize(b){return b<1024?b+'B':b<1048576?(b/1024).toFixed(0)+'KB':(b/1048576).toFixed(1)+'MB';}
 function fileToB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
 
 // ═══ UPLOAD (chunks via GET/JSONP) ═══
-async function uploadFilesChunked(solId,files){if(!files.length)return[];const url=getUrl();if(!url)return[];const links=[];for(let i=0;i<files.length;i++){const f=files[i];try{const b64=await fileToB64(f.file);const CHUNK=6000;const chunks=[];for(let c=0;c<b64.length;c+=CHUNK)chunks.push(b64.slice(c,c+CHUNK));const initR=await api({accion:'uploadInit',solicitudId:solId,fileName:f.name,mimeType:f.mime,totalChunks:chunks.length});if(!initR?.ok)continue;for(let c=0;c<chunks.length;c++)await api({accion:'uploadChunk',uploadId:initR.uploadId,chunkIndex:c,data:chunks[c]});const finR=await api({accion:'uploadFinalize',uploadId:initR.uploadId});if(finR?.ok&&finR.fileUrl)links.push({url:finR.fileUrl,type:f.type,name:f.name});}catch(e){console.error('Upload err:',e);}}return links;}
+async function uploadFilesChunked(solId,files){
+  if(!files.length)return[];
+  const url=getUrl();
+  if(!url)return[];
+  const links=[];
+  for(let i=0;i<files.length;i++){
+    const f=files[i];
+    try{
+      const b64=await fileToB64(f.file);
+      // Try POST first (fast, single request)
+      let uploaded=false;
+      try{
+        const resp=await fetch(url,{method:'POST',redirect:'follow',body:JSON.stringify({accion:'upload',solicitudId:solId.replace('_ev',''),fileName:f.name,mimeType:f.mime,base64:b64})});
+        let data;
+        try{data=await resp.json();}catch(e){
+          const txt=await resp.text();
+          const m=txt.match(/href="([^"]+)"/);
+          if(m){const r2=await fetch(m[1]);data=await r2.json();}
+        }
+        if(data?.ok&&data.fileUrl){links.push({url:data.fileUrl,type:f.type,name:f.name});uploaded=true;}
+      }catch(e){console.log('POST failed, using chunks');}
+      // Fallback: chunks via JSONP GET
+      if(!uploaded){
+        const CHUNK=6000;const chunks=[];
+        for(let c=0;c<b64.length;c+=CHUNK)chunks.push(b64.slice(c,c+CHUNK));
+        const initR=await api({accion:'uploadInit',solicitudId:solId,fileName:f.name,mimeType:f.mime,totalChunks:chunks.length});
+        if(!initR?.ok)continue;
+        for(let c=0;c<chunks.length;c++)await api({accion:'uploadChunk',uploadId:initR.uploadId,chunkIndex:c,data:chunks[c]});
+        const finR=await api({accion:'uploadFinalize',uploadId:initR.uploadId});
+        if(finR?.ok&&finR.fileUrl)links.push({url:finR.fileUrl,type:f.type,name:f.name});
+      }
+    }catch(e){console.error('Upload err:',e);}
+  }
+  return links;
+}
 
 // ═══ API (JSONP) ═══
 function getUrl(){const u=(document.getElementById('cfgUrl')?.value||document.getElementById('cfgUrlBusc')?.value||document.getElementById('cfgUrlAdmin')?.value||STATE.webAppUrl||'').trim();if(u){STATE.webAppUrl=u;saveS();}return u;}
@@ -527,6 +561,28 @@ function updateArchivos(solId,fileUrl,fileType,fileName){
       break;
     }
   }
+}
+
+function doPost(e){
+  var result={ok:false};
+  try{
+    var body=JSON.parse(e.postData.contents);
+    if(body.accion==='upload'){
+      var bytes=Utilities.base64Decode(body.base64);
+      var blob=Utilities.newBlob(bytes,body.mimeType,body.fileName);
+      var root=getFolder();
+      var subName=body.solicitudId||'misc';
+      var subs=root.getFoldersByName(subName);
+      var sub=subs.hasNext()?subs.next():root.createFolder(subName);
+      var file=sub.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);
+      var fileUrl='https://drive.google.com/uc?id='+file.getId();
+      var fileType=body.mimeType.startsWith('video/')?'video':'image';
+      updateArchivos(body.solicitudId,fileUrl,fileType,body.fileName);
+      result={ok:true,fileUrl:fileUrl};
+    }
+  }catch(err){result={ok:false,error:err.toString()};}
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }`;
 
 // ═══ NOTIFICACIÓN SONORA ═══
