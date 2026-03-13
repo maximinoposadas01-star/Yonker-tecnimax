@@ -93,7 +93,7 @@ function loadD(){api({accion:'listar'}).then(function(r){if(r&&r.data)ST.sols=r.
 function renderAll(){
   if(ST.role==='vendedor'){rMis();rTodas();}
   else if(ST.role==='buscador'){rPn();rBM();rBH();}
-  else if(ST.role==='admin'){rMis();rTodas();rAProc();rAVd();rANV();rANE();rStats();}
+  else if(ST.role==='admin'){rAProc();rAVd();rANV();rANE();rStats();}
 }
 function rMis(){var l=ST.sols.filter(function(s){return s.vendedor===ST.name&&s.estado!=='Archivado';});$('badgeMis').textContent=l.length;$('listMis').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'vendedor');}).join(''):emp('📋','Sin solicitudes');}
 function rTodas(){var l=ST.sols.filter(function(s){return s.estado!=='Archivado';});$('badgeTodas').textContent=l.length;$('listTodas').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'vendedor-todas');}).join(''):emp('📋','Vacío');}
@@ -183,7 +183,7 @@ function selectRole(r){selR=r;document.querySelectorAll('.role-card').forEach(fu
 function confirmLogin(){var n=$('inputName').value;if(!n){toast('Nombre','error');return;}if(selR==='admin'&&$('inputPin').value.trim()!==PIN){toast('PIN incorrecto','error');return;}ST.role=selR;ST.name=n;save();enterApp();}
 function logout(){localStorage.removeItem(LS);location.reload();}
 function enterApp(){$('screenRole').style.display='none';$('appHeader').style.display='flex';var ic={vendedor:'🏷️',buscador:'🔍',admin:'👑'};$('headerUser').textContent=(ic[ST.role]||'')+' '+ST.name;
-  if(ST.role==='admin'){$('viewVendedor').style.display='block';$('viewAdmin').style.display='block';}
+  if(ST.role==='admin')$('viewAdmin').style.display='block';
   else if(ST.role==='vendedor')$('viewVendedor').style.display='block';
   else $('viewBuscador').style.display='block';
   initM();loadD();}
