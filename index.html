@@ -93,23 +93,39 @@ function rAdmin(){var l=ST.sols.filter(function(s){return s.estado!=='Archivado'
 function byF(a,b){return new Date(b.fecha)-new Date(a.fecha);}
 
 function rStats(){
-  var s=ST.sols,pend=0,busc=0,enc=0,noE=0,vend=0,noV=0,tot=s.length;
-  s.forEach(function(x){if(x.estado==='Pendiente')pend++;else if(x.estado==='Buscando')busc++;else if(x.estado==='Encontrado')enc++;else if(x.estado==='No Encontrado')noE++;else if(x.estado==='Vendido')vend++;else if(x.estado==='No Vendido')noV++;});
-  var tasaEnc=enc+noE+vend+noV>0?Math.round((enc+vend+noV)/(enc+noE+vend+noV)*100):0;
-  var tasaVenta=enc+vend+noV>0?Math.round(vend/(vend+noV)*100):0;
-  // Buscadores
-  var bk={};s.forEach(function(x){if(!x.buscador||x.estado==='Pendiente'||x.estado==='Archivado')return;if(!bk[x.buscador])bk[x.buscador]={n:x.buscador,e:0,ne:0,a:0,v:0,nv:0,t:[]};var b=bk[x.buscador];if(x.estado==='Buscando')b.a++;if(x.estado==='Encontrado'||x.estado==='Vendido'||x.estado==='No Vendido'){b.e++;if(x.fecha&&x.fechaResultado){var m=Math.round((new Date(x.fechaResultado)-new Date(x.fecha))/60000);if(m>0&&m<1440)b.t.push(m);}}if(x.estado==='No Encontrado')b.ne++;if(x.estado==='Vendido')b.v++;if(x.estado==='No Vendido')b.nv++;});
+  var s=ST.sols,pend=0,busc=0,enc=0,noE=0,vend=0,noV=0;
+  s.forEach(function(x){
+    var e=x.estado;
+    if(e==='Pendiente')pend++;
+    else if(e==='Buscando')busc++;
+    else if(e==='Encontrado')enc++;
+    else if(e==='No Encontrado')noE++;
+    else if(e==='Vendido')vend++;
+    else if(e==='No Vendido')noV++;
+  });
+  var tot=pend+busc+enc+noE+vend+noV;
+  var totalBuscados=enc+noE+vend+noV;
+  var totalEncontrados=enc+vend+noV;
+  var tasaEnc=totalBuscados>0?Math.round(totalEncontrados/totalBuscados*100):0;
+  var tasaVenta=vend+noV>0?Math.round(vend/(vend+noV)*100):0;
+  var bk={};s.forEach(function(x){
+    if(!x.buscador||x.estado==='Pendiente'||x.estado==='Archivado')return;
+    if(!bk[x.buscador])bk[x.buscador]={n:x.buscador,e:0,ne:0,a:0,v:0,nv:0,t:[]};
+    var b=bk[x.buscador],e=x.estado;
+    if(e==='Buscando')b.a++;
+    if(e==='Encontrado'||e==='Vendido'||e==='No Vendido'){b.e++;if(x.fecha&&x.fechaResultado){var m=Math.round((new Date(x.fechaResultado)-new Date(x.fecha))/60000);if(m>0&&m<1440)b.t.push(m);}}
+    if(e==='No Encontrado')b.ne++;
+    if(e==='Vendido')b.v++;if(e==='No Vendido')b.nv++;
+  });
   var bl=Object.values(bk).sort(function(a,b){var ta=a.e+a.ne>0?(a.e/(a.e+a.ne)):0;var tb=b.e+b.ne>0?(b.e/(b.e+b.ne)):0;return tb-ta;});
   var rk='';if(bl.length){rk='<div style="margin-top:20px"><div class="section-title">Rendimiento por Buscador</div><table class="rank-table"><tr><th>Buscador</th><th>✅</th><th>❌</th><th>📊</th><th>⏱</th></tr>';bl.forEach(function(b){var avg=b.t.length?Math.round(b.t.reduce(function(a,c){return a+c;},0)/b.t.length):'-';var tasa=b.e+b.ne>0?Math.round(b.e/(b.e+b.ne)*100):0;rk+='<tr><td style="font-weight:600">'+esc(b.n)+'</td><td style="color:var(--green)">'+b.e+'</td><td style="color:var(--red)">'+b.ne+'</td><td style="color:var(--accent)">'+tasa+'%</td><td>'+(avg==='-'?'-':avg+'m')+'</td></tr>';});rk+='</table></div>';}
-  // Vendedores + ventas
   var vk={};s.forEach(function(x){if(!x.vendedor||x.estado==='Archivado')return;if(!vk[x.vendedor])vk[x.vendedor]={n:x.vendedor,tot:0,v:0};vk[x.vendedor].tot++;if(x.estado==='Vendido')vk[x.vendedor].v++;});
   var vl=Object.values(vk).sort(function(a,b){return b.v-a.v;});
-  var vh='';if(vl.length){vh='<div style="margin-top:20px"><div class="section-title">Vendedores</div><table class="rank-table"><tr><th>Vendedor</th><th>Solicitudes</th><th>💰 Ventas</th></tr>';vl.forEach(function(v){vh+='<tr><td style="font-weight:600">'+esc(v.n)+'</td><td>'+v.tot+'</td><td style="color:var(--green);font-weight:700">'+v.v+'</td></tr>';});vh+='</table></div>';}
-  // Razones no venta
+  var vh='';if(vl.length){vh='<div style="margin-top:20px"><div class="section-title">Vendedores</div><table class="rank-table"><tr><th>Vendedor</th><th>Solicitudes</th><th>💰</th></tr>';vl.forEach(function(v){vh+='<tr><td style="font-weight:600">'+esc(v.n)+'</td><td>'+v.tot+'</td><td style="color:var(--green);font-weight:700">'+v.v+'</td></tr>';});vh+='</table></div>';}
   var razones={};s.forEach(function(x){if(x.estado==='No Vendido'&&x.razonNoVenta){if(!razones[x.razonNoVenta])razones[x.razonNoVenta]=0;razones[x.razonNoVenta]++;}});
   var rl=Object.entries(razones).sort(function(a,b){return b[1]-a[1];});
-  var rh='';if(rl.length){rh='<div style="margin-top:20px"><div class="section-title">Razones de No Venta</div><table class="rank-table"><tr><th>Razón</th><th>Cantidad</th></tr>';rl.forEach(function(r){rh+='<tr><td>'+esc(r[0])+'</td><td style="font-weight:700">'+r[1]+'</td></tr>';});rh+='</table></div>';}
-  $('statsContainer').innerHTML='<div class="stat-grid"><div class="stat-card accent"><div class="stat-num">'+tot+'</div><div class="stat-label">Total</div></div><div class="stat-card orange"><div class="stat-num">'+pend+'</div><div class="stat-label">Pendientes</div></div><div class="stat-card blue"><div class="stat-num">'+busc+'</div><div class="stat-label">Buscando</div></div><div class="stat-card green"><div class="stat-num">'+enc+'</div><div class="stat-label">Encontrados</div></div><div class="stat-card red"><div class="stat-num">'+noE+'</div><div class="stat-label">No Encontrados</div></div><div class="stat-card green"><div class="stat-num">'+tasaEnc+'%</div><div class="stat-label">Tasa Búsqueda</div></div><div class="stat-card green"><div class="stat-num">'+vend+'</div><div class="stat-label">💰 Vendidos</div></div><div class="stat-card purple"><div class="stat-num">'+noV+'</div><div class="stat-label">No Vendidos</div></div><div class="stat-card green"><div class="stat-num">'+tasaVenta+'%</div><div class="stat-label">Tasa Venta</div></div></div>'+rk+vh+rh;
+  var rh='';if(rl.length){rh='<div style="margin-top:20px"><div class="section-title">Razones No Venta</div><table class="rank-table"><tr><th>Razón</th><th>#</th></tr>';rl.forEach(function(r){rh+='<tr><td>'+esc(r[0])+'</td><td style="font-weight:700">'+r[1]+'</td></tr>';});rh+='</table></div>';}
+  $('statsContainer').innerHTML='<div class="stat-grid"><div class="stat-card accent"><div class="stat-num">'+tot+'</div><div class="stat-label">Total</div></div><div class="stat-card orange"><div class="stat-num">'+pend+'</div><div class="stat-label">Pendientes</div></div><div class="stat-card blue"><div class="stat-num">'+busc+'</div><div class="stat-label">Buscando</div></div><div class="stat-card green"><div class="stat-num">'+totalEncontrados+'</div><div class="stat-label">Encontrados</div></div><div class="stat-card red"><div class="stat-num">'+noE+'</div><div class="stat-label">No Encontrados</div></div><div class="stat-card green"><div class="stat-num">'+tasaEnc+'%</div><div class="stat-label">Tasa Búsqueda</div></div><div class="stat-card green"><div class="stat-num">'+vend+'</div><div class="stat-label">💰 Vendidos</div></div><div class="stat-card purple"><div class="stat-num">'+noV+'</div><div class="stat-label">No Vendidos</div></div><div class="stat-card green"><div class="stat-num">'+tasaVenta+'%</div><div class="stat-label">Tasa Venta</div></div></div>'+rk+vh+rh;
 }
 
 function card(s,ctx){
@@ -117,11 +133,12 @@ function card(s,ctx){
   var arch=s.archivos||[],archB=s.archivosBuscador||[];
   var att='';if(arch.length)att+='<div class="sol-attachments"><button class="btn-view" onclick="verDet(\''+s.id+'\')">📷 '+arch.length+' foto'+(arch.length>1?'s':'')+'</button></div>';if(archB.length)att+='<div class="sol-attachments"><button class="btn-view" style="background:var(--green-bg);color:var(--green)" onclick="verDet(\''+s.id+'\')">📸 Evidencia ('+archB.length+')</button></div>';
   var ac='',mio=s.vendedor===ST.name;
+  var isVendedorView=ctx==='vendedor'||ctx==='vendedor-todas';
   if(ctx==='buscador'&&s.estado==='Pendiente')ac='<div class="sol-actions"><button class="btn btn-primary btn-sm" onclick="aceptar(\''+s.id+'\')">✋ Aceptar</button><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button></div>';
   else if(ctx==='buscador-activa')ac='<div class="sol-actions"><button class="btn btn-success btn-sm" onclick="reportar(\''+s.id+'\',\'Encontrado\')">✅ Encontrado</button><button class="btn btn-danger btn-sm" onclick="reportar(\''+s.id+'\',\'No Encontrado\')">❌ No</button></div>';
   else if(ctx==='admin')ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button>'+(s.estado==='Buscando'?'<button class="btn btn-sm" style="background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange)" onclick="desasignar(\''+s.id+'\')">↩</button>':'')+'<button class="btn-ghost" onclick="archivar(\''+s.id+'\')">🗑</button></div>';
-  else if((ctx==='vendedor'||ctx==='vendedor-todas')&&mio&&s.estado==='Encontrado')ac='<div class="sol-actions"><button class="btn btn-success btn-sm" onclick="marcarVenta(\''+s.id+'\',true)">💰 Vendido</button><button class="btn btn-sm" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple)" onclick="marcarVenta(\''+s.id+'\',false)">✗ No Vendido</button><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button></div>';
-  else if((ctx==='vendedor'||ctx==='vendedor-todas')&&mio)ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button><button class="btn-ghost" onclick="archivar(\''+s.id+'\')">🗑</button></div>';
+  else if(isVendedorView&&s.estado==='Encontrado')ac='<div class="sol-actions"><button class="btn btn-success btn-sm" onclick="marcarVenta(\''+s.id+'\',true)">💰 Vendido</button><button class="btn btn-sm" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple)" onclick="marcarVenta(\''+s.id+'\',false)">✗ No Vendido</button><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button></div>';
+  else if(isVendedorView&&mio)ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button><button class="btn-ghost" onclick="archivar(\''+s.id+'\')">🗑</button></div>';
   else ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button></div>';
   return '<div class="sol-card"><div class="sol-card-header"><div><div class="sol-id">'+s.id+'</div><div class="sol-pieza">'+esc(s.pieza)+'</div><div class="sol-vehiculo">'+esc(s.marca)+' '+esc(s.modelo)+' '+(s.anio||'')+'</div></div><div style="text-align:right"><div class="sol-time">'+ago(s.fecha)+'</div><span class="tag tag-'+eC+'" style="margin-top:4px">'+(s.estado||'Pendiente')+'</span></div></div><div class="sol-meta"><span class="tag tag-'+uC+'">'+(s.urgencia||'Normal')+'</span>'+(s.cliente?'<span class="sol-meta-item">👤 '+esc(s.cliente)+'</span>':'')+'<span class="sol-meta-item">🏷️ '+esc(s.vendedor)+'</span></div>'+att+(s.notas?'<div class="sol-notas">"'+trunc(s.notas,80)+'"</div>':'')+(s.buscador?'<div style="font-size:0.8rem;color:var(--blue);margin-top:4px">🔍 '+esc(s.buscador)+'</div>':'')+(s.notasBuscador?'<div class="sol-notas" style="color:var(--blue)">💬 '+esc(s.notasBuscador)+'</div>':'')+(s.razonNoVenta?'<div class="sol-notas" style="color:var(--purple)">Razón: '+esc(s.razonNoVenta)+'</div>':'')+(s.fechaResultado?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px">'+fDate(s.fechaResultado)+'</div>':'')+ac+'</div>';
 }
