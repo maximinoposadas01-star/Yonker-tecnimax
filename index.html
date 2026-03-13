@@ -249,10 +249,11 @@ textarea{resize:vertical;min-height:70px}
 
 <script>
 const ADMIN_PIN = '1234';
-let STATE={role:null,name:'',solicitudes:[],webAppUrl:'https://script.google.com/macros/s/AKfycbzLTHNWU4jMlScsM9FjErKTPwJ4cZ9ft38tYBMczX5Uj4IYYRZXwbeEPcZTUln9xgtN/exec'};
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycbzLTHNWU4jMlScsM9FjErKTPwJ4cZ9ft38tYBMczX5Uj4IYYRZXwbeEPcZTUln9xgtN/exec';
+let STATE={role:null,name:'',solicitudes:[],webAppUrl:DEFAULT_URL};
 const LS='tecnimax_buscador_v4';
 const saveS=()=>localStorage.setItem(LS,JSON.stringify({role:STATE.role,name:STATE.name,webAppUrl:STATE.webAppUrl}));
-const loadS=()=>{try{const s=JSON.parse(localStorage.getItem(LS));if(s?.role&&s?.name){Object.assign(STATE,s);return true;}}catch(e){}return false;};
+const loadS=()=>{try{const s=JSON.parse(localStorage.getItem(LS));if(s?.role&&s?.name){STATE.role=s.role;STATE.name=s.name;STATE.webAppUrl=s.webAppUrl||DEFAULT_URL;return true;}}catch(e){}return false;};
 
 // ═══ FILES ═══
 let pendingFiles=[];
