@@ -46,10 +46,12 @@ input[type="text"],input[type="number"],select,textarea{width:100%;background:va
     <div id="tabHistorial" style="display:none"><div class="section-title">Historial</div><div id="listHistorial" class="sol-list"></div></div>
   </div></div>
 
-  <div id="viewAdmin" style="display:none"><div class="tab-bar"><button class="active" onclick="adminTab('panel')">📊 Panel</button><button onclick="adminTab('proceso')">En Proceso <span class="badge" id="badgeProc">0</span></button><button onclick="adminTab('final')">Finalizadas <span class="badge" id="badgeFinal">0</span></button></div><div class="main">
-    <div id="tabPanel"><div class="section-title">Panel de Control</div><div id="statsContainer"></div></div>
-    <div id="tabProceso" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">En Proceso</div><button class="btn-ghost" onclick="limpiarTodas('proceso')">🗑 Limpiar todas</button></div><div id="listProceso" class="sol-list"></div></div>
-    <div id="tabFinal" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">Finalizadas</div><button class="btn-ghost" onclick="limpiarTodas('final')">🗑 Limpiar todas</button></div><div id="listFinal" class="sol-list"></div></div>
+  <div id="viewAdmin" style="display:none"><div class="tab-bar"><button class="active" onclick="adminTab('panel')">📊</button><button onclick="adminTab('proceso')">Proceso <span class="badge" id="badgeProc">0</span></button><button onclick="adminTab('vendidas')">💰 <span class="badge" id="badgeVend">0</span></button><button onclick="adminTab('noVend')">✗Venta <span class="badge" id="badgeNV">0</span></button><button onclick="adminTab('noEnc')">❌ <span class="badge" id="badgeNE">0</span></button></div><div class="main">
+    <div id="tabPanel"><div class="section-title">Panel</div><div id="statsContainer"></div></div>
+    <div id="tabProceso" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">En Proceso</div><button class="btn-ghost" onclick="limpiarTodas('proceso')">🗑 Limpiar</button></div><div id="listProceso" class="sol-list"></div></div>
+    <div id="tabVendidas" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">💰 Vendidas</div><button class="btn-ghost" onclick="limpiarAdmin('vendidas')">🗑 Limpiar</button></div><div id="listVendidas" class="sol-list"></div></div>
+    <div id="tabNoVend" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">No Vendidas</div><button class="btn-ghost" onclick="limpiarAdmin('noVend')">🗑 Limpiar</button></div><div id="listNoVend" class="sol-list"></div></div>
+    <div id="tabNoEnc" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">No Encontradas</div><button class="btn-ghost" onclick="limpiarAdmin('noEnc')">🗑 Limpiar</button></div><div id="listNoEnc" class="sol-list"></div></div>
   </div></div>
 </div>
 <div class="modal-overlay" id="modal"><div class="modal"><div class="modal-header"><h3 id="modalTitle"></h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body" id="modalBody"></div></div></div>
@@ -82,12 +84,12 @@ function api(p){return new Promise(function(res){var cb='_c'+Date.now()+Math.ran
 function crearSolicitud(){var pieza=$('fPieza').value.trim(),marca=$('fMarca').value,modelo=$('fModelo').value,anio=$('fAnio').value.trim(),cliente=$('fCliente').value.trim(),notas=$('fNotas').value.trim();if(!pieza||!marca||!modelo){toast('Campos obligatorios','error');return;}var btn=$('btnEnviar');btn.disabled=true;btn.textContent='⏳...';var id='SOL-'+Date.now().toString(36).toUpperCase();api({accion:'crear',id:id,pieza:pieza,marca:marca,modelo:modelo,anio:anio,cliente:cliente,urgencia:urg,notas:notas,archivos:'[]',vendedor:ST.name,fecha:new Date().toISOString()}).then(function(r){if(!r||!r.ok){toast('Error','error');btn.disabled=false;btn.textContent='📤 Enviar';return;}if(!pendF.length){done();return;}var pg=$('uploadProgress'),fl=$('progressFill'),tx=$('progressText');pg.classList.add('show');var chain=Promise.resolve();pendF.forEach(function(f,i){chain=chain.then(function(){tx.textContent='Subiendo '+(i+1)+'/'+pendF.length;fl.style.width=((i+1)/pendF.length*100)+'%';return upFile(id,f);});});chain.then(function(){tx.textContent='✓';setTimeout(function(){pg.classList.remove('show');},1500);done();});function done(){btn.disabled=false;btn.textContent='📤 Enviar';toast('✓ '+id);clrForm();loadD();}});}
 function clrForm(){['fPieza','fAnio','fCliente','fNotas'].forEach(function(id){$(id).value='';});$('fMarca').selectedIndex=0;updateModelos();pendF=[];rPrev();urg='Normal';document.querySelectorAll('.urgency-pill').forEach(function(p){p.classList.remove('selected','normal','urgente','critico');});document.querySelector('[data-val="Normal"]').classList.add('selected','normal');}
 
-function loadD(){api({accion:'listar'}).then(function(r){if(r&&r.data){ST.sols=r.data.map(function(s){['archivos','archivosBuscador'].forEach(function(k){if(typeof s[k]==='string'&&s[k]){try{s[k]=JSON.parse(s[k]);}catch(e){s[k]=[];}}if(!Array.isArray(s[k]))s[k]=[];});s.estadoPrevio=s.estadoPrevio||'';return s;});}renderAll();});}
+function loadD(){api({accion:'listar'}).then(function(r){if(r&&r.data){ST.sols=r.data.map(function(s){['archivos','archivosBuscador'].forEach(function(k){if(typeof s[k]==='string'&&s[k]){try{s[k]=JSON.parse(s[k]);}catch(e){s[k]=[];}}if(!Array.isArray(s[k]))s[k]=[];});s.estadoPrevio=s.estadoPrevio||'';s.buscadoresPrevios=s.buscadoresPrevios||'';return s;});}renderAll();});}
 
 function renderAll(){
   if(ST.role==='vendedor'){rMis();rTodas();}
   else if(ST.role==='buscador'){rPen();rMiasB();rHist();}
-  else{rProc();rFinal();rStats();}
+  else{rProc();rAdmVend();rAdmNV();rAdmNE();rStats();}
 }
 function rMis(){var l=ST.sols.filter(function(s){return s.vendedor===ST.name&&s.estado!=='Archivado';});$('badgeMis').textContent=l.length;var el=$('listMis');if(!l.length){el.innerHTML=emp('📋','Sin solicitudes');return;}el.innerHTML=l.sort(byF).map(function(s){return card(s,'vendedor');}).join('');}
 function rTodas(){var l=ST.sols.filter(function(s){return s.estado!=='Archivado';});$('badgeTodas').textContent=l.length;$('listTodas').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'vendedor-todas');}).join(''):emp('📋','Sin solicitudes');}
@@ -95,22 +97,40 @@ function rPen(){var l=ST.sols.filter(function(s){return s.estado==='Pendiente';}
 function rMiasB(){var l=ST.sols.filter(function(s){return s.buscador===ST.name&&s.estado==='Buscando';});$('badgeMias').textContent=l.length;$('listMias').innerHTML=l.length?l.map(function(s){return card(s,'buscador-activa');}).join(''):emp('🔍','Sin activas');}
 function rHist(){var l=ST.sols.filter(function(s){return s.buscador===ST.name&&(s.estado==='Encontrado'||s.estado==='No Encontrado'||s.estado==='Vendido'||s.estado==='No Vendido');});$('listHistorial').innerHTML=l.length?l.sort(function(a,b){return new Date(b.fechaResultado||b.fecha)-new Date(a.fechaResultado||a.fecha);}).map(function(s){return card(s,'historial');}).join(''):emp('📜','Sin historial');}
 function rProc(){var l=ST.sols.filter(function(s){return s.estado==='Pendiente'||s.estado==='Buscando'||s.estado==='Encontrado';});$('badgeProc').textContent=l.length;$('listProceso').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin');}).join(''):emp('✓','Sin órdenes en proceso');}
-function rFinal(){var l=ST.sols.filter(function(s){return s.estado==='Vendido'||s.estado==='No Vendido'||s.estado==='No Encontrado';});$('badgeFinal').textContent=l.length;$('listFinal').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin');}).join(''):emp('📦','Sin finalizadas');}
+function rAdmVend(){var l=ST.sols.filter(function(s){return s.estado==='Vendido'||(s.estado==='Archivado'&&s.estadoPrevio==='Vendido');});$('badgeVend').textContent=l.length;$('listVendidas').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin-archivo');}).join(''):emp('💰','Sin vendidas');}
+function rAdmNV(){var l=ST.sols.filter(function(s){return s.estado==='No Vendido'||(s.estado==='Archivado'&&s.estadoPrevio==='No Vendido');});$('badgeNV').textContent=l.length;$('listNoVend').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin-archivo');}).join(''):emp('✗','Sin no vendidas');}
+function rAdmNE(){var l=ST.sols.filter(function(s){return s.estado==='No Encontrado'||(s.estado==='Archivado'&&s.estadoPrevio==='No Encontrado');});$('badgeNE').textContent=l.length;$('listNoEnc').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin-archivo');}).join(''):emp('❌','Sin no encontradas');}
 function limpiarTodas(tipo){
   var lista;
   if(tipo==='proceso')lista=ST.sols.filter(function(s){return s.estado==='Pendiente'||s.estado==='Buscando'||s.estado==='Encontrado';});
-  else lista=ST.sols.filter(function(s){return s.estado==='Vendido'||s.estado==='No Vendido'||s.estado==='No Encontrado';});
-  if(!lista.length){toast('No hay órdenes para limpiar');return;}
-  openModal('Confirmar','<div style="text-align:center;margin-bottom:16px"><div style="font-size:2rem">⚠️</div><div style="font-size:1rem;font-weight:700;margin-top:8px">¿Archivar '+lista.length+' órdenes?</div><div style="color:var(--text-dim);font-size:0.85rem;margin-top:4px">Las estadísticas se conservan</div></div><div style="display:flex;gap:8px"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="ejecutarLimpieza(\''+tipo+'\')">Archivar todas</button></div>');
+  if(!lista||!lista.length){toast('Nada que limpiar');return;}
+  openModal('Confirmar','<div style="text-align:center;margin-bottom:16px"><div style="font-size:2rem">⚠️</div><div style="font-size:1rem;font-weight:700;margin-top:8px">¿Archivar '+lista.length+' órdenes?</div></div><div style="display:flex;gap:8px"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="ejecutarLimpieza(\''+tipo+'\')">Archivar</button></div>');
 }
 function ejecutarLimpieza(tipo){
   var lista;
   if(tipo==='proceso')lista=ST.sols.filter(function(s){return s.estado==='Pendiente'||s.estado==='Buscando'||s.estado==='Encontrado';});
-  else lista=ST.sols.filter(function(s){return s.estado==='Vendido'||s.estado==='No Vendido'||s.estado==='No Encontrado';});
-  closeModal();toast('⏳ Archivando '+lista.length+'...');
+  closeModal();toast('⏳ Archivando...');
   var chain=Promise.resolve();
   lista.forEach(function(s){chain=chain.then(function(){return api({accion:'archivar',id:s.id});});});
-  chain.then(function(){toast('✓ '+lista.length+' órdenes archivadas');loadD();});
+  chain.then(function(){toast('✓ Archivadas');loadD();});
+}
+function limpiarAdmin(tipo){
+  var lista;
+  if(tipo==='vendidas')lista=ST.sols.filter(function(s){return s.estado==='Vendido'||(s.estado==='Archivado'&&s.estadoPrevio==='Vendido');});
+  else if(tipo==='noVend')lista=ST.sols.filter(function(s){return s.estado==='No Vendido'||(s.estado==='Archivado'&&s.estadoPrevio==='No Vendido');});
+  else if(tipo==='noEnc')lista=ST.sols.filter(function(s){return s.estado==='No Encontrado'||(s.estado==='Archivado'&&s.estadoPrevio==='No Encontrado');});
+  if(!lista||!lista.length){toast('Nada que limpiar');return;}
+  openModal('Confirmar','<div style="text-align:center;margin-bottom:16px"><div style="font-size:2rem">⚠️</div><div style="font-size:1rem;font-weight:700;margin-top:8px">¿Eliminar '+lista.length+' órdenes definitivamente?</div><div style="color:var(--red);font-size:0.82rem;margin-top:4px">Se borran de la hoja (stats del historial se conservan)</div></div><div style="display:flex;gap:8px"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="ejecutarBorradoAdmin(\''+tipo+'\')">Eliminar</button></div>');
+}
+function ejecutarBorradoAdmin(tipo){
+  var lista;
+  if(tipo==='vendidas')lista=ST.sols.filter(function(s){return s.estado==='Vendido'||(s.estado==='Archivado'&&s.estadoPrevio==='Vendido');});
+  else if(tipo==='noVend')lista=ST.sols.filter(function(s){return s.estado==='No Vendido'||(s.estado==='Archivado'&&s.estadoPrevio==='No Vendido');});
+  else if(tipo==='noEnc')lista=ST.sols.filter(function(s){return s.estado==='No Encontrado'||(s.estado==='Archivado'&&s.estadoPrevio==='No Encontrado');});
+  closeModal();toast('⏳ Eliminando...');
+  var chain=Promise.resolve();
+  lista.forEach(function(s){chain=chain.then(function(){return api({accion:'adminBorrar',id:s.id});});});
+  chain.then(function(){toast('✓ Eliminadas');loadD();});
 }
 function byF(a,b){return new Date(b.fecha)-new Date(a.fecha);}
 
@@ -211,15 +231,25 @@ function card(s,ctx){
   if(ctx==='buscador'&&s.estado==='Pendiente')ac='<div class="sol-actions"><button class="btn btn-primary btn-sm" onclick="aceptar(\''+s.id+'\')">✋ Aceptar</button><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button></div>';
   else if(ctx==='buscador-activa')ac='<div class="sol-actions"><button class="btn btn-success btn-sm" onclick="reportar(\''+s.id+'\',\'Encontrado\')">✅ Encontrado</button><button class="btn btn-danger btn-sm" onclick="reportar(\''+s.id+'\',\'No Encontrado\')">❌ No</button></div>';
   else if(ctx==='admin')ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button>'+(s.estado==='Buscando'?'<button class="btn btn-sm" style="background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange)" onclick="desasignar(\''+s.id+'\')">↩</button>':'')+'<button class="btn-ghost" onclick="archivar(\''+s.id+'\')">🗑</button></div>';
+  else if(ctx==='admin-archivo')ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button><button class="btn-ghost" style="color:var(--red)" onclick="adminBorrar(\''+s.id+'\')">🗑 Eliminar</button></div>';
   else if(isVendedorView&&s.estado==='Encontrado')ac='<div class="sol-actions"><button class="btn btn-success btn-sm" onclick="marcarVenta(\''+s.id+'\',true)">💰 Vendido</button><button class="btn btn-sm" style="background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple)" onclick="marcarVenta(\''+s.id+'\',false)">✗ No Vendido</button><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button></div>';
   else if(isVendedorView&&mio)ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button><button class="btn-ghost" onclick="archivar(\''+s.id+'\')">🗑</button></div>';
   else ac='<div class="sol-actions"><button class="btn btn-secondary btn-sm" onclick="verDet(\''+s.id+'\')">👁</button></div>';
-  return '<div class="sol-card"><div class="sol-card-header"><div><div class="sol-id">'+s.id+'</div><div class="sol-pieza">'+esc(s.pieza)+'</div><div class="sol-vehiculo">'+esc(s.marca)+' '+esc(s.modelo)+' '+(s.anio||'')+'</div></div><div style="text-align:right"><div class="sol-time">'+ago(s.fecha)+'</div><span class="tag tag-'+eC+'" style="margin-top:4px">'+(s.estado||'Pendiente')+'</span></div></div><div class="sol-meta"><span class="tag tag-'+uC+'">'+(s.urgencia||'Normal')+'</span>'+(s.cliente?'<span class="sol-meta-item">👤 '+esc(s.cliente)+'</span>':'')+'<span class="sol-meta-item">🏷️ '+esc(s.vendedor)+'</span></div>'+att+(s.notas?'<div class="sol-notas">"'+trunc(s.notas,80)+'"</div>':'')+(s.buscador?'<div style="font-size:0.8rem;color:var(--blue);margin-top:4px">🔍 '+esc(s.buscador)+'</div>':'')+(s.notasBuscador?'<div class="sol-notas" style="color:var(--blue)">💬 '+esc(s.notasBuscador)+'</div>':'')+(s.razonNoVenta?'<div class="sol-notas" style="color:var(--purple)">Razón: '+esc(s.razonNoVenta)+'</div>':'')+(s.fechaResultado?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px">'+fDate(s.fechaResultado)+'</div>':'')+ac+'</div>';
+  var rebusq=s.buscadoresPrevios?s.buscadoresPrevios.split(',').filter(function(x){return x;}).length:0;
+  var rebTag=rebusq>0&&s.estado==='Pendiente'?'<span class="tag" style="background:var(--orange-bg);color:var(--orange);font-size:0.65rem;margin-left:4px">🔄 Rebúsqueda ('+rebusq+'/2)</span>':'';
+  return '<div class="sol-card"><div class="sol-card-header"><div><div class="sol-id">'+s.id+'</div><div class="sol-pieza">'+esc(s.pieza)+'</div><div class="sol-vehiculo">'+esc(s.marca)+' '+esc(s.modelo)+' '+(s.anio||'')+'</div></div><div style="text-align:right"><div class="sol-time">'+ago(s.fecha)+'</div><span class="tag tag-'+eC+'" style="margin-top:4px">'+(s.estado||'Pendiente')+'</span>'+rebTag+'</div></div><div class="sol-meta"><span class="tag tag-'+uC+'">'+(s.urgencia||'Normal')+'</span>'+(s.cliente?'<span class="sol-meta-item">👤 '+esc(s.cliente)+'</span>':'')+'<span class="sol-meta-item">🏷️ '+esc(s.vendedor)+'</span></div>'+att+(s.notas?'<div class="sol-notas">"'+trunc(s.notas,80)+'"</div>':'')+(s.buscador?'<div style="font-size:0.8rem;color:var(--blue);margin-top:4px">🔍 '+esc(s.buscador)+'</div>':'')+(s.notasBuscador?'<div class="sol-notas" style="color:var(--blue)">💬 '+esc(s.notasBuscador)+'</div>':'')+(s.razonNoVenta?'<div class="sol-notas" style="color:var(--purple)">Razón: '+esc(s.razonNoVenta)+'</div>':'')+(s.fechaResultado?'<div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px">'+fDate(s.fechaResultado)+'</div>':'')+ac+'</div>';
 }
 
-function aceptar(id){var a=ST.sols.filter(function(s){return s.buscador===ST.name&&s.estado==='Buscando';});if(a.length>=3){toast('Límite 3 activas','error');return;}api({accion:'aceptar',id:id,buscador:ST.name}).then(function(r){if(r&&r.ok){toast('✓ Aceptada');loadD();buscadorTab('mias');}else toast('Error','error');});}
+function aceptar(id){
+  var a=ST.sols.filter(function(s){return s.buscador===ST.name&&s.estado==='Buscando';});
+  if(a.length>=3){toast('Límite 3 activas','error');return;}
+  var sol=ST.sols.find(function(s){return s.id===id;});
+  if(sol&&sol.buscadoresPrevios&&sol.buscadoresPrevios.indexOf(ST.name)>=0){toast('Ya buscaste esta orden','error');return;}
+  api({accion:'aceptar',id:id,buscador:ST.name}).then(function(r){if(r&&r.ok){toast('✓ Aceptada');loadD();buscadorTab('mias');}else toast(r&&r.error||'Error','error');});
+}
 function archivar(id){api({accion:'archivar',id:id}).then(function(){toast('✓ Archivada');loadD();});}
 function desasignar(id){api({accion:'desasignar',id:id}).then(function(){toast('✓ Desasignada');loadD();});}
+function adminBorrar(id){api({accion:'adminBorrar',id:id}).then(function(){toast('✓ Eliminada');loadD();});}
 
 function marcarVenta(id,vendido){
   if(vendido){api({accion:'venta',id:id,estado:'Vendido',razonNoVenta:''}).then(function(){return api({accion:'archivar',id:id});}).then(function(){toast('🎉 ¡Felicidades por la venta!');loadD();});}
@@ -244,7 +274,7 @@ function logout(){localStorage.removeItem(LS);location.reload();}
 function enterApp(){$('screenRole').style.display='none';$('appHeader').style.display='flex';var ic={vendedor:'🏷️',buscador:'🔍',admin:'👑'};$('headerUser').textContent=(ic[ST.role]||'')+' '+ST.name;$({vendedor:'viewVendedor',buscador:'viewBuscador',admin:'viewAdmin'}[ST.role]).style.display='block';initM();loadD();}
 function vendedorTab(t){var m={nueva:'tabNueva',mis:'tabMis',todas:'tabTodas'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewVendedor .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='nueva'&&i===0)||(t==='mis'&&i===1)||(t==='todas'&&i===2));});if(t==='mis')rMis();if(t==='todas')rTodas();}
 function buscadorTab(t){var m={pendientes:'tabPendientes',mias:'tabMias',historial:'tabHistorial'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewBuscador .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='pendientes'&&i===0)||(t==='mias'&&i===1)||(t==='historial'&&i===2));});}
-function adminTab(t){var m={panel:'tabPanel',proceso:'tabProceso',final:'tabFinal'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewAdmin .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='panel'&&i===0)||(t==='proceso'&&i===1)||(t==='final'&&i===2));});if(t==='panel')rStats();if(t==='proceso')rProc();if(t==='final')rFinal();}
+function adminTab(t){var m={panel:'tabPanel',proceso:'tabProceso',vendidas:'tabVendidas',noVend:'tabNoVend',noEnc:'tabNoEnc'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewAdmin .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='panel'&&i===0)||(t==='proceso'&&i===1)||(t==='vendidas'&&i===2)||(t==='noVend'&&i===3)||(t==='noEnc'&&i===4));});if(t==='panel')rStats();}
 var urg='Normal';function setUrgency(el){urg=el.dataset.val;document.querySelectorAll('.urgency-pill').forEach(function(p){p.classList.remove('selected','normal','urgente','critico');});el.classList.add('selected',urg.toLowerCase().replace('í','i'));}
 function openModal(t,b){$('modalTitle').textContent=t;$('modalBody').innerHTML=b;$('modal').classList.add('show');}
 function closeModal(){$('modal').classList.remove('show');}
@@ -266,7 +296,7 @@ function sRef(){
   var oH=lH;
   api({accion:'listar'}).then(function(r){
     if(r&&r.data){
-      ST.sols=r.data.map(function(s){['archivos','archivosBuscador'].forEach(function(k){if(typeof s[k]==='string'&&s[k]){try{s[k]=JSON.parse(s[k]);}catch(e){s[k]=[];}}if(!Array.isArray(s[k]))s[k]=[];});s.estadoPrevio=s.estadoPrevio||'';return s;});
+      ST.sols=r.data.map(function(s){['archivos','archivosBuscador'].forEach(function(k){if(typeof s[k]==='string'&&s[k]){try{s[k]=JSON.parse(s[k]);}catch(e){s[k]=[];}}if(!Array.isArray(s[k]))s[k]=[];});s.estadoPrevio=s.estadoPrevio||'';s.buscadoresPrevios=s.buscadoresPrevios||'';return s;});
     }
     var nH=ST.sols.map(function(x){return x.id+'|'+x.estado;}).join(',');
     if(oH&&nH!==oH&&nOn){
