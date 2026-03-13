@@ -117,7 +117,17 @@ function byF(a,b){return new Date(b.fecha)-new Date(a.fecha);}
 function rStats(){
   var s=ST.sols,pend=0,busc=0,enc=0,noE=0,vend=0,noV=0;
   // Helper: get effective estado (use estadoPrevio for archived)
-  function eEst(x){return x.estado==='Archivado'&&x.estadoPrevio?x.estadoPrevio:x.estado;}
+  function eEst(x){
+    if(x.estado!=='Archivado')return x.estado;
+    if(x.estadoPrevio)return x.estadoPrevio;
+    // Reconstruir para órdenes archivadas sin estadoPrevio
+    if(x.razonNoVenta)return 'No Vendido';
+    if(x.archivosBuscador&&x.archivosBuscador.length>0)return 'Vendido';
+    if(x.fechaResultado&&x.notasBuscador&&!x.buscador)return 'No Encontrado';
+    if(x.fechaResultado)return 'Encontrado';
+    if(x.buscador)return 'Buscando';
+    return 'Pendiente';
+  }
   s.forEach(function(x){
     var e=eEst(x);
     if(e==='Pendiente')pend++;
