@@ -311,24 +311,34 @@ function byFecha(a,b){return new Date(b.fecha)-new Date(a.fecha);}
 
 function renderStats(){
   var sols=STATE.solicitudes;
-  var pend=0,busc=0,enc=0,noEnc=0,total=0,arch=0;
+  var pend=0,busc=0,enc=0,noEnc=0,total=0;
   sols.forEach(function(s){
-    if(s.estado==='Archivado'){arch++;return;}
     total++;
     if(s.estado==='Pendiente')pend++;
     else if(s.estado==='Buscando')busc++;
-    else if(s.estado==='Encontrado')enc++;
+    else if(s.estado==='Encontrado'||s.estado==='Archivado'&&s.notasBuscador)enc++;
     else if(s.estado==='No Encontrado')noEnc++;
+    else if(s.estado==='Archivado'){}
+  });
+  // Recontar: archivadas que pasaron por resultado cuentan
+  enc=0;noEnc=0;
+  sols.forEach(function(s){
+    if(s.fechaResultado||s.estado==='Encontrado'||s.estado==='No Encontrado'){
+      // Tiene resultado registrado
+      if(s.estado==='Encontrado'||(s.estado==='Archivado'&&s.archivosBuscador&&s.archivosBuscador.length>0))enc++;
+      else if(s.estado==='No Encontrado')noEnc++;
+      else if(s.estado==='Archivado'&&s.notasBuscador)noEnc++;
+    }
   });
   var tasa=enc+noEnc>0?Math.round(enc/(enc+noEnc)*100):0;
   var buscadores={};
   sols.forEach(function(s){
-    if(!s.buscador||s.estado==='Pendiente'||s.estado==='Archivado')return;
+    if(!s.buscador||s.estado==='Pendiente')return;
     if(!buscadores[s.buscador])buscadores[s.buscador]={n:s.buscador,e:0,ne:0,a:0,t:[]};
     var b=buscadores[s.buscador];
     if(s.estado==='Buscando')b.a++;
-    if(s.estado==='Encontrado'){b.e++;if(s.fecha&&s.fechaResultado){var m=Math.round((new Date(s.fechaResultado)-new Date(s.fecha))/60000);if(m>0&&m<1440)b.t.push(m);}}
-    if(s.estado==='No Encontrado')b.ne++;
+    if(s.estado==='Encontrado'||(s.estado==='Archivado'&&s.archivosBuscador&&s.archivosBuscador.length>0)){b.e++;if(s.fecha&&s.fechaResultado){var m=Math.round((new Date(s.fechaResultado)-new Date(s.fecha))/60000);if(m>0&&m<1440)b.t.push(m);}}
+    if(s.estado==='No Encontrado'||(s.estado==='Archivado'&&s.notasBuscador&&(!s.archivosBuscador||s.archivosBuscador.length===0)))b.ne++;
   });
   var rk='';var bl=Object.values(buscadores).sort(function(a,b){return(b.e+b.ne+b.a)-(a.e+a.ne+a.a);});
   if(bl.length){
@@ -336,7 +346,7 @@ function renderStats(){
     bl.forEach(function(b){var avg=b.t.length?Math.round(b.t.reduce(function(a,c){return a+c;},0)/b.t.length):'-';rk+='<tr><td style="font-weight:600">'+esc(b.n)+'</td><td style="color:var(--green)">'+b.e+'</td><td style="color:var(--red)">'+b.ne+'</td><td style="color:var(--blue)">'+b.a+'</td><td style="color:var(--accent)">'+(avg==='-'?'-':avg+'min')+'</td></tr>';});
     rk+='</table></div>';
   }
-  var vnd={};sols.forEach(function(s){if(!s.vendedor||s.estado==='Archivado')return;if(!vnd[s.vendedor])vnd[s.vendedor]=0;vnd[s.vendedor]++;});
+  var vnd={};sols.forEach(function(s){if(!s.vendedor)return;if(!vnd[s.vendedor])vnd[s.vendedor]=0;vnd[s.vendedor]++;});
   var vh='';var vl=Object.entries(vnd).sort(function(a,b){return b[1]-a[1];});
   if(vl.length){vh='<div style="margin-top:20px"><div class="section-title">Solicitudes por Vendedor</div><table class="rank-table"><tr><th>Vendedor</th><th>Total</th></tr>';vl.forEach(function(v){vh+='<tr><td style="font-weight:600">'+esc(v[0])+'</td><td>'+v[1]+'</td></tr>';});vh+='</table></div>';}
   document.getElementById('statsContainer').innerHTML='<div class="stat-grid"><div class="stat-card accent"><div class="stat-num">'+total+'</div><div class="stat-label">Total</div></div><div class="stat-card orange"><div class="stat-num">'+pend+'</div><div class="stat-label">Pendientes</div></div><div class="stat-card blue"><div class="stat-num">'+busc+'</div><div class="stat-label">Buscando</div></div><div class="stat-card green"><div class="stat-num">'+enc+'</div><div class="stat-label">Encontrados</div></div><div class="stat-card red"><div class="stat-num">'+noEnc+'</div><div class="stat-label">No Encontrados</div></div><div class="stat-card green"><div class="stat-num">'+tasa+'%</div><div class="stat-label">Tasa Éxito</div></div></div>'+rk+vh;
