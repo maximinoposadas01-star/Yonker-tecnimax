@@ -32,7 +32,7 @@ input[type="text"],input[type="number"],select,textarea{width:100%;background:va
 <body>
 <div id="app">
   <header class="app-header" id="appHeader" style="display:none"><div class="app-logo"><div class="icon">T</div><div class="name">TECNI<span>MAX</span></div></div><button class="user-pill" id="logoutBtn"><div class="dot"></div><span id="headerUser">—</span></button></header>
-  <div class="role-screen" id="screenRole"><h1>TECNI<span>MAX</span></h1><p>Sistema de Búsqueda de Repuestos</p><div class="role-cards"><button class="role-card" data-role="vendedor"><div class="emoji">🏷️</div><div class="title">Vendedor</div><div class="desc">Crear solicitudes</div></button><button class="role-card" data-role="buscador"><div class="emoji">🔍</div><div class="title">Buscador</div><div class="desc">Buscar en el yonker</div></button><button class="role-card" data-role="admin" style="border-color:var(--purple)"><div class="emoji">👑</div><div class="title">Admin</div><div class="desc">Control y estadísticas</div></button></div><div class="name-input-wrap" id="nameWrap"><label>Tu nombre:</label><div class="name-input-row"><select id="inputName" style="flex:1"><option value="">Seleccionar...</option></select><button class="btn btn-primary btn-sm" onclick="confirmLogin()">Entrar</button></div><div id="adminPinWrap" style="display:none;margin-top:10px"><label style="font-size:0.82rem;color:var(--text-dim);margin-bottom:6px;display:block">PIN:</label><input type="text" id="inputPin" placeholder="PIN" style="text-align:center;letter-spacing:4px"></div></div></div>
+  <div class="role-screen" id="screenRole"><h1>TECNI<span>MAX</span></h1><p>Sistema de Búsqueda de Repuestos</p><div class="role-cards"><button class="role-card" data-role="vendedor"><div class="emoji">🏷️</div><div class="title">Vendedor</div><div class="desc">Crear solicitudes</div></button><button class="role-card" data-role="buscador"><div class="emoji">🔍</div><div class="title">Buscador</div><div class="desc">Buscar en el yonker</div></button><button class="role-card" data-role="admin" style="border-color:var(--purple)"><div class="emoji">👑</div><div class="title">Admin</div><div class="desc">Control y estadísticas</div></button></div><div class="name-input-wrap" id="nameWrap"><label>Tu nombre:</label><div class="name-input-row"><select id="inputName" style="flex:1"><option value="">Seleccionar...</option></select><button class="btn btn-primary btn-sm" onclick="confirmLogin()">Entrar</button></div><div id="adminPinWrap" style="display:none;margin-top:10px"><label style="font-size:0.82rem;color:var(--text-dim);margin-bottom:6px;display:block">PIN:</label><input type="password" id="inputPin" placeholder="****" style="text-align:center;letter-spacing:4px"></div></div></div>
 
   <div id="viewVendedor" style="display:none"><div class="tab-bar"><button class="active" onclick="vendedorTab('nueva')">+ Nueva</button><button onclick="vendedorTab('mis')">Mías <span class="badge" id="badgeMis">0</span></button><button onclick="vendedorTab('todas')">Todas <span class="badge" id="badgeTodas">0</span></button></div><div class="main">
     <div id="tabNueva"><div class="section-title">Nueva Solicitud</div><div class="form-card"><div class="form-group"><label>Pieza <span class="req">*</span></label><input type="text" id="fPieza" placeholder="Alternador, Radiador, Faro..."></div><div class="form-row"><div class="form-group"><label>Marca <span class="req">*</span></label><select id="fMarca" onchange="updateModelos()"><option value="">Marca...</option></select></div><div class="form-group"><label>Modelo <span class="req">*</span></label><select id="fModelo"><option value="">Modelo...</option></select></div></div><div class="form-row"><div class="form-group"><label>Año</label><input type="number" id="fAnio" placeholder="2015"></div><div class="form-group"><label>Cliente</label><input type="text" id="fCliente" placeholder="Nombre"></div></div><div class="form-group"><label>Urgencia</label><div class="urgency-pills"><button class="urgency-pill selected normal" data-val="Normal">🟢 Normal</button><button class="urgency-pill" data-val="Urgente">🟠 Urgente</button><button class="urgency-pill" data-val="Crítico">🔴 Crítico</button></div></div><div class="form-group"><label>Fotos / Video</label><button type="button" class="file-upload-area" id="fileUploadBtn">📷 Toca para foto/video</button><input type="file" id="fileInput" accept="image/*,video/*" multiple onchange="handleFiles(this)" style="display:none"><div class="file-previews" id="filePreviews"></div><div class="upload-progress" id="uploadProgress"><div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div><div class="progress-text" id="progressText"></div></div></div><div class="form-group"><label>Notas</label><textarea id="fNotas" placeholder="Detalles..."></textarea></div><button class="btn btn-primary" id="btnEnviar" onclick="crearSolicitud()">📤 Enviar</button></div></div>
@@ -46,16 +46,17 @@ input[type="text"],input[type="number"],select,textarea{width:100%;background:va
     <div id="tabHistorial" style="display:none"><div class="section-title">Historial</div><div id="listHistorial" class="sol-list"></div></div>
   </div></div>
 
-  <div id="viewAdmin" style="display:none"><div class="tab-bar"><button class="active" onclick="adminTab('panel')">📊 Panel</button><button onclick="adminTab('ordenes')">Órdenes <span class="badge" id="badgeAdmin">0</span></button></div><div class="main">
+  <div id="viewAdmin" style="display:none"><div class="tab-bar"><button class="active" onclick="adminTab('panel')">📊 Panel</button><button onclick="adminTab('proceso')">En Proceso <span class="badge" id="badgeProc">0</span></button><button onclick="adminTab('final')">Finalizadas <span class="badge" id="badgeFinal">0</span></button></div><div class="main">
     <div id="tabPanel"><div class="section-title">Panel de Control</div><div id="statsContainer"></div></div>
-    <div id="tabOrdenes" style="display:none"><div class="section-title">Órdenes</div><div id="listAdmin" class="sol-list"></div></div>
+    <div id="tabProceso" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">En Proceso</div><button class="btn-ghost" onclick="limpiarTodas('proceso')">🗑 Limpiar todas</button></div><div id="listProceso" class="sol-list"></div></div>
+    <div id="tabFinal" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="section-title" style="margin-bottom:0">Finalizadas</div><button class="btn-ghost" onclick="limpiarTodas('final')">🗑 Limpiar todas</button></div><div id="listFinal" class="sol-list"></div></div>
   </div></div>
 </div>
 <div class="modal-overlay" id="modal"><div class="modal"><div class="modal-header"><h3 id="modalTitle"></h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body" id="modalBody"></div></div></div>
 <div id="toast" style="display:none"></div>
 
 <script>
-var PIN='1234',URL_GAS='https://script.google.com/macros/s/AKfycbzLTHNWU4jMlScsM9FjErKTPwJ4cZ9ft38tYBMczX5Uj4IYYRZXwbeEPcZTUln9xgtN/exec';
+var PIN='4005',URL_GAS='https://script.google.com/macros/s/AKfycbzLTHNWU4jMlScsM9FjErKTPwJ4cZ9ft38tYBMczX5Uj4IYYRZXwbeEPcZTUln9xgtN/exec';
 var VEHI={Honda:['CR-V','Civic','HR-V','Fit','Pilot','Accord'],Toyota:['Corolla','Tacoma','RAV4','Matrix','Yaris','4Runner'],Nissan:['Frontier','Pathfinder','Rogue','Sentra'],Hyundai:['Palisade','Santa Fe','Tucson','Elantra','Sonata','Accent'],Kia:['Sorento','Sportage','Forte','Soul'],Chevrolet:['Spark','Cruze','Equinox','Silverado'],Jeep:['Wrangler','Patriot','Cherokee','Grand Cherokee'],Ford:['Bronco','F-150','Escape','Focus','Expedition','Explorer'],Otro:['(en notas)']};
 var NOM={vendedor:['ADONIS','HAROLD','BULNES','OSCAR','NOE','LUIS'],buscador:['AXEL','ISAAC','PAISA','ANTONI','ROGER','CRISTHIAN'],admin:['ADONIS']};
 var RAZONES_NO_VENTA=['DIFERENTE','PRECIO','DAÑADO','NO LE GUSTO','OTRO'];
@@ -83,13 +84,34 @@ function clrForm(){['fPieza','fAnio','fCliente','fNotas'].forEach(function(id){$
 
 function loadD(){api({accion:'listar'}).then(function(r){if(r&&r.data){ST.sols=r.data.map(function(s){['archivos','archivosBuscador'].forEach(function(k){if(typeof s[k]==='string'&&s[k]){try{s[k]=JSON.parse(s[k]);}catch(e){s[k]=[];}}if(!Array.isArray(s[k]))s[k]=[];});return s;});}renderAll();});}
 
-function renderAll(){if(ST.role==='vendedor'){rMis();rTodas();}else if(ST.role==='buscador'){rPen();rMiasB();rHist();}else{rAdmin();rStats();}}
+function renderAll(){
+  if(ST.role==='vendedor'){rMis();rTodas();}
+  else if(ST.role==='buscador'){rPen();rMiasB();rHist();}
+  else{rProc();rFinal();rStats();}
+}
 function rMis(){var l=ST.sols.filter(function(s){return s.vendedor===ST.name&&s.estado!=='Archivado';});$('badgeMis').textContent=l.length;var el=$('listMis');if(!l.length){el.innerHTML=emp('📋','Sin solicitudes');return;}el.innerHTML=l.sort(byF).map(function(s){return card(s,'vendedor');}).join('');}
 function rTodas(){var l=ST.sols.filter(function(s){return s.estado!=='Archivado';});$('badgeTodas').textContent=l.length;$('listTodas').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'vendedor-todas');}).join(''):emp('📋','Sin solicitudes');}
 function rPen(){var l=ST.sols.filter(function(s){return s.estado==='Pendiente';});$('badgePend').textContent=l.length;$('listPendientes').innerHTML=l.length?l.sort(function(a,b){var u={'Crítico':0,'Urgente':1,'Normal':2};return(u[a.urgencia]||2)-(u[b.urgencia]||2)||new Date(b.fecha)-new Date(a.fecha);}).map(function(s){return card(s,'buscador');}).join(''):emp('🎉','Sin pendientes');}
 function rMiasB(){var l=ST.sols.filter(function(s){return s.buscador===ST.name&&s.estado==='Buscando';});$('badgeMias').textContent=l.length;$('listMias').innerHTML=l.length?l.map(function(s){return card(s,'buscador-activa');}).join(''):emp('🔍','Sin activas');}
 function rHist(){var l=ST.sols.filter(function(s){return s.buscador===ST.name&&(s.estado==='Encontrado'||s.estado==='No Encontrado'||s.estado==='Vendido'||s.estado==='No Vendido');});$('listHistorial').innerHTML=l.length?l.sort(function(a,b){return new Date(b.fechaResultado||b.fecha)-new Date(a.fechaResultado||a.fecha);}).map(function(s){return card(s,'historial');}).join(''):emp('📜','Sin historial');}
-function rAdmin(){var l=ST.sols.filter(function(s){return s.estado!=='Archivado';});$('badgeAdmin').textContent=l.length;$('listAdmin').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin');}).join(''):emp('📋','Sin órdenes');}
+function rProc(){var l=ST.sols.filter(function(s){return s.estado==='Pendiente'||s.estado==='Buscando'||s.estado==='Encontrado';});$('badgeProc').textContent=l.length;$('listProceso').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin');}).join(''):emp('✓','Sin órdenes en proceso');}
+function rFinal(){var l=ST.sols.filter(function(s){return s.estado==='Vendido'||s.estado==='No Vendido'||s.estado==='No Encontrado';});$('badgeFinal').textContent=l.length;$('listFinal').innerHTML=l.length?l.sort(byF).map(function(s){return card(s,'admin');}).join(''):emp('📦','Sin finalizadas');}
+function limpiarTodas(tipo){
+  var lista;
+  if(tipo==='proceso')lista=ST.sols.filter(function(s){return s.estado==='Pendiente'||s.estado==='Buscando'||s.estado==='Encontrado';});
+  else lista=ST.sols.filter(function(s){return s.estado==='Vendido'||s.estado==='No Vendido'||s.estado==='No Encontrado';});
+  if(!lista.length){toast('No hay órdenes para limpiar');return;}
+  openModal('Confirmar','<div style="text-align:center;margin-bottom:16px"><div style="font-size:2rem">⚠️</div><div style="font-size:1rem;font-weight:700;margin-top:8px">¿Archivar '+lista.length+' órdenes?</div><div style="color:var(--text-dim);font-size:0.85rem;margin-top:4px">Las estadísticas se conservan</div></div><div style="display:flex;gap:8px"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-danger" onclick="ejecutarLimpieza(\''+tipo+'\')">Archivar todas</button></div>');
+}
+function ejecutarLimpieza(tipo){
+  var lista;
+  if(tipo==='proceso')lista=ST.sols.filter(function(s){return s.estado==='Pendiente'||s.estado==='Buscando'||s.estado==='Encontrado';});
+  else lista=ST.sols.filter(function(s){return s.estado==='Vendido'||s.estado==='No Vendido'||s.estado==='No Encontrado';});
+  closeModal();toast('⏳ Archivando '+lista.length+'...');
+  var chain=Promise.resolve();
+  lista.forEach(function(s){chain=chain.then(function(){return api({accion:'archivar',id:s.id});});});
+  chain.then(function(){toast('✓ '+lista.length+' órdenes archivadas');loadD();});
+}
 function byF(a,b){return new Date(b.fecha)-new Date(a.fecha);}
 
 function rStats(){
@@ -102,6 +124,13 @@ function rStats(){
     else if(e==='No Encontrado')noE++;
     else if(e==='Vendido')vend++;
     else if(e==='No Vendido')noV++;
+    else if(e==='Archivado'){
+      // Reconstruir estado previo de archivadas
+      if(x.razonNoVenta)noV++;
+      else if(x.archivosBuscador&&x.archivosBuscador.length>0)vend++;
+      else if(x.fechaResultado&&x.notasBuscador)noE++;
+      else if(x.fechaResultado)enc++;
+    }
   });
   var tot=pend+busc+enc+noE+vend+noV;
   var totalBuscados=enc+noE+vend+noV;
@@ -109,20 +138,27 @@ function rStats(){
   var tasaEnc=totalBuscados>0?Math.round(totalEncontrados/totalBuscados*100):0;
   var tasaVenta=vend+noV>0?Math.round(vend/(vend+noV)*100):0;
   var bk={};s.forEach(function(x){
-    if(!x.buscador||x.estado==='Pendiente'||x.estado==='Archivado')return;
+    if(!x.buscador||x.estado==='Pendiente')return;
     if(!bk[x.buscador])bk[x.buscador]={n:x.buscador,e:0,ne:0,a:0,v:0,nv:0,t:[]};
     var b=bk[x.buscador],e=x.estado;
     if(e==='Buscando')b.a++;
     if(e==='Encontrado'||e==='Vendido'||e==='No Vendido'){b.e++;if(x.fecha&&x.fechaResultado){var m=Math.round((new Date(x.fechaResultado)-new Date(x.fecha))/60000);if(m>0&&m<1440)b.t.push(m);}}
     if(e==='No Encontrado')b.ne++;
     if(e==='Vendido')b.v++;if(e==='No Vendido')b.nv++;
+    if(e==='Archivado'&&x.fechaResultado){
+      if(x.razonNoVenta){b.e++;b.nv++;}
+      else if(x.archivosBuscador&&x.archivosBuscador.length>0){b.e++;b.v++;}
+      else if(x.notasBuscador)b.ne++;
+      else b.e++;
+      if(x.fecha&&x.fechaResultado){var m2=Math.round((new Date(x.fechaResultado)-new Date(x.fecha))/60000);if(m2>0&&m2<1440)b.t.push(m2);}
+    }
   });
   var bl=Object.values(bk).sort(function(a,b){var ta=a.e+a.ne>0?(a.e/(a.e+a.ne)):0;var tb=b.e+b.ne>0?(b.e/(b.e+b.ne)):0;return tb-ta;});
   var rk='';if(bl.length){rk='<div style="margin-top:20px"><div class="section-title">Rendimiento por Buscador</div><table class="rank-table"><tr><th>Buscador</th><th>✅</th><th>❌</th><th>📊</th><th>⏱</th></tr>';bl.forEach(function(b){var avg=b.t.length?Math.round(b.t.reduce(function(a,c){return a+c;},0)/b.t.length):'-';var tasa=b.e+b.ne>0?Math.round(b.e/(b.e+b.ne)*100):0;rk+='<tr><td style="font-weight:600">'+esc(b.n)+'</td><td style="color:var(--green)">'+b.e+'</td><td style="color:var(--red)">'+b.ne+'</td><td style="color:var(--accent)">'+tasa+'%</td><td>'+(avg==='-'?'-':avg+'m')+'</td></tr>';});rk+='</table></div>';}
-  var vk={};s.forEach(function(x){if(!x.vendedor||x.estado==='Archivado')return;if(!vk[x.vendedor])vk[x.vendedor]={n:x.vendedor,tot:0,v:0};vk[x.vendedor].tot++;if(x.estado==='Vendido')vk[x.vendedor].v++;});
+  var vk={};s.forEach(function(x){if(!x.vendedor)return;if(!vk[x.vendedor])vk[x.vendedor]={n:x.vendedor,tot:0,v:0};vk[x.vendedor].tot++;if(x.estado==='Vendido')vk[x.vendedor].v++;if(x.estado==='Archivado'&&x.archivosBuscador&&x.archivosBuscador.length>0&&!x.razonNoVenta)vk[x.vendedor].v++;});
   var vl=Object.values(vk).sort(function(a,b){return b.v-a.v;});
   var vh='';if(vl.length){vh='<div style="margin-top:20px"><div class="section-title">Vendedores</div><table class="rank-table"><tr><th>Vendedor</th><th>Solicitudes</th><th>💰</th></tr>';vl.forEach(function(v){vh+='<tr><td style="font-weight:600">'+esc(v.n)+'</td><td>'+v.tot+'</td><td style="color:var(--green);font-weight:700">'+v.v+'</td></tr>';});vh+='</table></div>';}
-  var razones={};s.forEach(function(x){if(x.estado==='No Vendido'&&x.razonNoVenta){if(!razones[x.razonNoVenta])razones[x.razonNoVenta]=0;razones[x.razonNoVenta]++;}});
+  var razones={};s.forEach(function(x){if((x.estado==='No Vendido'||x.estado==='Archivado')&&x.razonNoVenta){if(!razones[x.razonNoVenta])razones[x.razonNoVenta]=0;razones[x.razonNoVenta]++;}});
   var rl=Object.entries(razones).sort(function(a,b){return b[1]-a[1];});
   var rh='';if(rl.length){rh='<div style="margin-top:20px"><div class="section-title">Razones No Venta</div><table class="rank-table"><tr><th>Razón</th><th>#</th></tr>';rl.forEach(function(r){rh+='<tr><td>'+esc(r[0])+'</td><td style="font-weight:700">'+r[1]+'</td></tr>';});rh+='</table></div>';}
   $('statsContainer').innerHTML='<div class="stat-grid"><div class="stat-card accent"><div class="stat-num">'+tot+'</div><div class="stat-label">Total</div></div><div class="stat-card orange"><div class="stat-num">'+pend+'</div><div class="stat-label">Pendientes</div></div><div class="stat-card blue"><div class="stat-num">'+busc+'</div><div class="stat-label">Buscando</div></div><div class="stat-card green"><div class="stat-num">'+totalEncontrados+'</div><div class="stat-label">Encontrados</div></div><div class="stat-card red"><div class="stat-num">'+noE+'</div><div class="stat-label">No Encontrados</div></div><div class="stat-card green"><div class="stat-num">'+tasaEnc+'%</div><div class="stat-label">Tasa Búsqueda</div></div><div class="stat-card green"><div class="stat-num">'+vend+'</div><div class="stat-label">💰 Vendidos</div></div><div class="stat-card purple"><div class="stat-num">'+noV+'</div><div class="stat-label">No Vendidos</div></div><div class="stat-card green"><div class="stat-num">'+tasaVenta+'%</div><div class="stat-label">Tasa Venta</div></div></div>'+rk+vh+rh;
@@ -148,10 +184,10 @@ function archivar(id){api({accion:'archivar',id:id}).then(function(){toast('✓ 
 function desasignar(id){api({accion:'desasignar',id:id}).then(function(){toast('✓ Desasignada');loadD();});}
 
 function marcarVenta(id,vendido){
-  if(vendido){api({accion:'venta',id:id,estado:'Vendido',razonNoVenta:''}).then(function(){toast('🎉 ¡Felicidades por la venta!');loadD();});}
+  if(vendido){api({accion:'venta',id:id,estado:'Vendido',razonNoVenta:''}).then(function(){return api({accion:'archivar',id:id});}).then(function(){toast('🎉 ¡Felicidades por la venta!');loadD();});}
   else{openModal('¿Por qué no se vendió?','<div class="form-group"><label>Razón:</label><select id="selRazon" style="width:100%"><option value="">Seleccionar...</option>'+RAZONES_NO_VENTA.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')+'</select></div><button class="btn btn-primary" onclick="confirmarNoVenta(\''+id+'\')">Confirmar</button>');}
 }
-function confirmarNoVenta(id){var r=($('selRazon')||{}).value;if(!r){toast('Selecciona razón','error');return;}api({accion:'venta',id:id,estado:'No Vendido',razonNoVenta:r}).then(function(){toast('✓ Registrado');closeModal();loadD();});}
+function confirmarNoVenta(id){var r=($('selRazon')||{}).value;if(!r){toast('Selecciona razón','error');return;}api({accion:'venta',id:id,estado:'No Vendido',razonNoVenta:r}).then(function(){return api({accion:'archivar',id:id});}).then(function(){toast('✓ Registrado');closeModal();loadD();});}
 
 var buscF=[];
 function reportar(id,res){buscF=[];var s=ST.sols.find(function(x){return x.id===id;});var eE=res==='Encontrado';openModal('Reportar','<div style="text-align:center;margin-bottom:16px"><div style="font-size:2rem">'+(eE?'✅':'❌')+'</div><div style="font-size:1.1rem;font-weight:700;margin-top:8px">'+(eE?'Encontrada':'No Encontrada')+'</div>'+(s?'<div style="color:var(--text-dim);font-size:0.9rem;margin-top:4px">'+esc(s.pieza)+' — '+esc(s.marca)+' '+esc(s.modelo)+'</div>':'')+'</div>'+(eE?'<div class="form-group"><label>📸 Fotos</label><button type="button" class="file-upload-area" onclick="$(\'bfIn\').click()">📷 Foto/video</button><input type="file" id="bfIn" accept="image/*,video/*" multiple onchange="hBF(this)" style="display:none"><div class="file-previews" id="bfP"></div></div>':'')+'<div class="form-group"><label>'+(eE?'Ubicación':'Razón')+'</label><textarea id="mNotas" placeholder="'+(eE?'Pasillo, rack...':'No hay...')+'"></textarea></div><button class="btn '+(eE?'btn-success':'btn-danger')+'" id="btnConf" onclick="confRes(\''+id+"','"+res+"')\">Confirmar</button>");}
@@ -170,7 +206,7 @@ function logout(){localStorage.removeItem(LS);location.reload();}
 function enterApp(){$('screenRole').style.display='none';$('appHeader').style.display='flex';var ic={vendedor:'🏷️',buscador:'🔍',admin:'👑'};$('headerUser').textContent=(ic[ST.role]||'')+' '+ST.name;$({vendedor:'viewVendedor',buscador:'viewBuscador',admin:'viewAdmin'}[ST.role]).style.display='block';initM();loadD();}
 function vendedorTab(t){var m={nueva:'tabNueva',mis:'tabMis',todas:'tabTodas'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewVendedor .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='nueva'&&i===0)||(t==='mis'&&i===1)||(t==='todas'&&i===2));});if(t==='mis')rMis();if(t==='todas')rTodas();}
 function buscadorTab(t){var m={pendientes:'tabPendientes',mias:'tabMias',historial:'tabHistorial'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewBuscador .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='pendientes'&&i===0)||(t==='mias'&&i===1)||(t==='historial'&&i===2));});}
-function adminTab(t){var m={panel:'tabPanel',ordenes:'tabOrdenes'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewAdmin .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='panel'&&i===0)||(t==='ordenes'&&i===1));});if(t==='panel')rStats();}
+function adminTab(t){var m={panel:'tabPanel',proceso:'tabProceso',final:'tabFinal'};Object.values(m).forEach(function(id){$(id).style.display='none';});$(m[t]).style.display='block';document.querySelectorAll('#viewAdmin .tab-bar button').forEach(function(b,i){b.classList.toggle('active',(t==='panel'&&i===0)||(t==='proceso'&&i===1)||(t==='final'&&i===2));});if(t==='panel')rStats();if(t==='proceso')rProc();if(t==='final')rFinal();}
 var urg='Normal';function setUrgency(el){urg=el.dataset.val;document.querySelectorAll('.urgency-pill').forEach(function(p){p.classList.remove('selected','normal','urgente','critico');});el.classList.add('selected',urg.toLowerCase().replace('í','i'));}
 function openModal(t,b){$('modalTitle').textContent=t;$('modalBody').innerHTML=b;$('modal').classList.add('show');}
 function closeModal(){$('modal').classList.remove('show');}
@@ -185,7 +221,26 @@ function emp(e,m){return '<div class="empty-state"><div class="emoji">'+e+'</div
 // Notif
 var aC=null;function beep(){try{if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();[0,0.18].forEach(function(d){var o=aC.createOscillator(),g=aC.createGain();o.connect(g);g.connect(aC.destination);o.frequency.value=880;g.gain.setValueAtTime(0.3,aC.currentTime+d);g.gain.exponentialRampToValueAtTime(0.01,aC.currentTime+d+0.15);o.start(aC.currentTime+d);o.stop(aC.currentTime+d+0.15);});}catch(e){}}
 var lH='',nOn=false;
-function sRef(){if(!ST.role)return;var oP=ST.sols.filter(function(s){return s.estado==='Pendiente';}).length,oR=ST.sols.filter(function(s){return s.estado==='Encontrado'||s.estado==='No Encontrado'||s.estado==='Vendido';}).length;loadD();var nH=ST.sols.map(function(x){return x.id+'|'+x.estado;}).join(',');if(lH&&nH!==lH&&nOn){var nP=ST.sols.filter(function(s){return s.estado==='Pendiente';}).length;var nR=ST.sols.filter(function(s){return s.estado==='Encontrado'||s.estado==='No Encontrado'||s.estado==='Vendido';}).length;if(ST.role==='buscador'&&nP>oP){beep();toast('🔔 Nueva solicitud');}else if(nR>oR){beep();toast('🔔 Actualización');}}lH=nH;}
+function sRef(){
+  if(!ST.role)return;
+  var oP=ST.sols.filter(function(s){return s.estado==='Pendiente';}).length;
+  var oR=ST.sols.filter(function(s){return s.estado==='Encontrado'||s.estado==='No Encontrado'||s.estado==='Vendido';}).length;
+  var oH=lH;
+  api({accion:'listar'}).then(function(r){
+    if(r&&r.data){
+      ST.sols=r.data.map(function(s){['archivos','archivosBuscador'].forEach(function(k){if(typeof s[k]==='string'&&s[k]){try{s[k]=JSON.parse(s[k]);}catch(e){s[k]=[];}}if(!Array.isArray(s[k]))s[k]=[];});return s;});
+    }
+    var nH=ST.sols.map(function(x){return x.id+'|'+x.estado;}).join(',');
+    if(oH&&nH!==oH&&nOn){
+      var nP=ST.sols.filter(function(s){return s.estado==='Pendiente';}).length;
+      var nR=ST.sols.filter(function(s){return s.estado==='Encontrado'||s.estado==='No Encontrado'||s.estado==='Vendido';}).length;
+      if(ST.role==='buscador'&&nP>oP){beep();toast('🔔 Nueva solicitud');}
+      else if(nR>oR){beep();toast('🔔 Actualización');}
+    }
+    lH=nH;
+    renderAll();
+  });
+}
 document.addEventListener('click',function i(){nOn=true;try{if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();aC.resume();}catch(e){}document.removeEventListener('click',i);},{once:true});
 document.addEventListener('click',function(e){var t=e.target;var rc=t.closest('.role-card');if(rc&&rc.dataset.role){selectRole(rc.dataset.role);return;}var up=t.closest('.urgency-pill');if(up){setUrgency(up);return;}if(t.closest('#fileUploadBtn')){$('fileInput').click();return;}if(t.closest('#logoutBtn')){logout();return;}});
 setInterval(sRef,10000);
